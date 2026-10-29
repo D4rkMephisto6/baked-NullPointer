@@ -1,0 +1,697 @@
+{
+  "info": {
+    "_postman_id": "1f57fc1a-93b9-4bc1-8b62-2c3277ab85d9",
+    "name": "NullPointer POS - Sprint 1 (Backend)",
+    "description": "Pruebas HU-01, HU-02, HU-03, HU-04, HU-05, HU-06, HU-07 y HU-26. Ordena las solicitudes por número y ejecútalas contra una base recién inicializada. Los usuarios de demo usan PIN 1234; solo para entorno local.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 - Health sin token",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/health"
+        },
+        "description": "Prueba inicial para confirmar que el backend está levantado.",
+        "auth": {
+          "type": "noauth"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"API responde UP\", function () { pm.response.to.have.status(200); pm.expect(pm.response.json().status).to.eql(\"UP\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 - Login MOZO (PIN de demo 1234)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/login"
+        },
+        "description": "La colección guarda el JWT en la variable de entorno token.",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeCode\": \"MOZ001\",\n  \"pin\": \"1234\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Login MOZO devuelve JWT\", function () { pm.response.to.have.status(200); pm.expect(pm.response.json().token).to.be.a(\"string\"); pm.environment.set(\"token\", pm.response.json().token); pm.expect(pm.response.json().user.role).to.eql(\"MOZO\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Consultar mesas y guardar M01/M02",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/mesas"
+        },
+        "description": "Copia los identificadores de las mesas M01 y M02 al entorno de Postman.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Se listan las mesas\", function () { pm.response.to.have.status(200); const tables = pm.response.json(); pm.expect(tables.length).to.be.above(0); const t1 = tables.find(t => t.tableCode === \"M01\"); const t2 = tables.find(t => t.tableCode === \"M02\"); pm.expect(t1).to.exist; pm.expect(t2).to.exist; pm.environment.set(\"tableId\", t1.tableId); pm.environment.set(\"targetTableId\", t2.tableId); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Login COCINERO para verificar KDS",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/login"
+        },
+        "description": "",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeCode\": \"COC001\",\n  \"pin\": \"1234\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Login COCINERO devuelve JWT\", function () { pm.response.to.have.status(200); pm.environment.set(\"cookToken\", pm.response.json().token); pm.expect(pm.response.json().user.role).to.eql(\"COCINERO\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Login ADMINISTRADOR para HU-26",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/login"
+        },
+        "description": "",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeCode\": \"ADM001\",\n  \"pin\": \"1234\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Login ADMINISTRADOR devuelve JWT\", function () { pm.response.to.have.status(200); pm.environment.set(\"adminToken\", pm.response.json().token); pm.expect(pm.response.json().user.role).to.eql(\"ADMINISTRADOR\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Consultar categorías del menú",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/menu/categorias"
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Hay categorías de menú\", function () { pm.response.to.have.status(200); const categories = pm.response.json(); pm.expect(categories.some(c => c.name === \"Pollos\")).to.eql(true); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Consultar productos Pollos y guardar ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/menu/productos?category=Pollos"
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Se obtiene el catálogo filtrado\", function () { pm.response.to.have.status(200); const products = pm.response.json(); const p = products.find(item => item.sku === \"POLLO-025\"); pm.expect(p).to.exist; pm.environment.set(\"productId\", p.productId); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - Crear comanda en borrador (HU-03/HU-04/HU-05)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/pedidos"
+        },
+        "description": "Requiere una mesa libre (M01 en la base recién inicializada).",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tableId\": \"{{tableId}}\",\n  \"notes\": \"Comanda de prueba de Sprint 1\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId}}\",\n      \"quantity\": 1,\n      \"notes\": \"Sin mayonesa\"\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Se crea comanda en BORRADOR con plato y nota\", function () { pm.response.to.have.status(201); const o = pm.response.json(); pm.expect(o.status).to.eql(\"BORRADOR\"); pm.expect(o.items.length).to.eql(1); pm.expect(o.items[0].notes).to.eql(\"Sin mayonesa\"); pm.environment.set(\"orderId\", o.orderId); pm.environment.set(\"orderCode\", o.orderCode); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 - Consultar comanda creada",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/pedidos/{{orderId}}"
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Comanda consultable por ID\", function () { pm.response.to.have.status(200); pm.expect(pm.response.json().orderId).to.eql(Number(pm.environment.get(\"orderId\"))); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 - Editar cantidades/notas antes de enviar (HU-04/HU-05)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/pedidos/{{orderId}}/detalles"
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"items\": [\n    {\n      \"productId\": \"{{productId}}\",\n      \"quantity\": 2,\n      \"notes\": \"Sin mayonesa; papas bien fritas\"\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"La comanda en borrador fue recalculada\", function () { pm.response.to.have.status(200); const o = pm.response.json(); pm.expect(o.status).to.eql(\"BORRADOR\"); pm.expect(o.items[0].quantity).to.eql(2); pm.expect(o.items[0].notes).to.include(\"papas bien fritas\"); pm.expect(Number(o.totalAmount)).to.be.above(0); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 - Transferir comanda de M01 a M02 (HU-06)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/mesas/transferir"
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"targetTableId\": \"{{targetTableId}}\",\n  \"reason\": \"Prueba de cambio de mesa\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"La mesa de la comanda fue cambiada\", function () { pm.response.to.have.status(200); const r = pm.response.json(); pm.expect(r.orderId).to.eql(Number(pm.environment.get(\"orderId\"))); pm.expect(r.toTableCode).to.eql(\"M02\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 - Enviar comanda a cocina (HU-07)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/pedidos/{{orderId}}/enviar-cocina"
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"La comanda fue enviada a cocina\", function () { pm.response.to.have.status(200); const o = pm.response.json().order; pm.expect(o.status).to.eql(\"ENVIADO_COCINA\"); pm.expect(o.sentAt).to.exist; });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 - Ver cola de cocina con token COCINERO",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/cocina/pedidos"
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{cookToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"La cola de cocina incluye la comanda recién enviada\", function () { pm.response.to.have.status(200); const orders = pm.response.json(); pm.expect(orders.some(o => o.orderId === Number(pm.environment.get(\"orderId\")))).to.eql(true); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 - Verificar que la mesa transferida está ocupada",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/mesas"
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"M02 está ocupada después del envío\", function () { pm.response.to.have.status(200); const t = pm.response.json().find(x => x.tableCode === \"M02\"); pm.expect(t.status).to.eql(\"OCUPADA\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 - Crear un usuario MOZO (HU-26)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admin/usuarios"
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeCode\": \"{{qaEmployeeCode}}\",\n  \"fullName\": \"Usuario de prueba creado en Postman\",\n  \"email\": \"qa@example.test\",\n  \"pin\": \"1234\",\n  \"role\": \"MOZO\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.environment.set(\"qaEmployeeCode\", \"QA\" + Date.now().toString().slice(-9));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Administrador puede crear otro usuario sin exponer el PIN\", function () { pm.response.to.have.status(201); const u = pm.response.json(); pm.expect(u.employeeCode).to.eql(pm.environment.get(\"qaEmployeeCode\")); pm.expect(u.role).to.eql(\"MOZO\"); pm.expect(u.pinHash).to.not.exist; pm.environment.set(\"createdUserId\", u.userId); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15 - Desactivar usuario creado (HU-26)",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admin/usuarios/{{createdUserId}}/desactivar"
+        },
+        "description": "",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"La cuenta queda desactivada\", function () { pm.response.to.have.status(200); pm.expect(pm.response.json().active).to.eql(false); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "16 - Login incorrecto debe responder 401",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/auth/login"
+        },
+        "description": "",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeCode\": \"MOZ001\",\n  \"pin\": \"0000\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"PIN incorrecto no autentica\", function () { pm.response.to.have.status(401); });"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cookToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tableId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "targetTableId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "productId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "orderId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "orderCode",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "createdUserId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "qaEmployeeCode",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
